@@ -1,0 +1,23 @@
+# virtual env
+.venv/
+
+# python
+*.pyc
+__pycache__/
+
+# env files
+.env
+.*.local
+
+# Flask
+instance/
+.pytest_cache/
+.coverage
+htmlcov/
+dist/
+build/
+*.egg-info/
+
+# db
+db.sqlite*
+*.db

@@ -3,6 +3,7 @@ from flaskr import create_app
 from flaskr.extensions import db
 from dotenv import load_dotenv
 from flaskr.models.admin import Admin
+from flaskr.models.booking import Booking
 
 
 load_dotenv()

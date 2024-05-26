@@ -4,8 +4,26 @@
 	<meta charset="UTF-8">
 	<meta name="viewport" content="width=device-width, initial-scale=1.0">
 	<title>{% block title %} {% endblock %} - BCAB</title>
+	<link rel="stylesheet" type="text/css" href="/css/bootstrap/bootstrap.css" />
 </head>
 <body>
+	<div class="container">
+    <!-- Flash Messages Block -->
+    {% with messages = get_flashed_messages(with_categories=true) %}
+			{% if messages %}
+				<div class="mt-4">
+						{% for category, message in messages %}
+							<div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+								{{ message }}
+							</div>
+						{% endfor %}
+				</div>
+			{% endif %}
+    {% endwith %}
+	</div>
+
 	{% block content %} {% endblock %}
+
+	<script src="/js/bootstrap/bootstrap.js"></script>
 </body>
 </html>

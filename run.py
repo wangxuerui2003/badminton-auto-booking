@@ -4,6 +4,7 @@ from flaskr.extensions import db
 from dotenv import load_dotenv
 from flaskr.models.admin import Admin
 from flaskr.models.booking import Booking
+from bot.booking_bot import BookingBot
 
 
 load_dotenv()
@@ -24,6 +25,8 @@ if __name__ == "__main__":
     with app.app_context():
         db.create_all()
         create_super_admin()
+        booking_bot = BookingBot(Booking.query.all())
+        booking_bot.start()
 
     if os.environ.get('APP_ENV') == 'local':
         app.run(debug=True)

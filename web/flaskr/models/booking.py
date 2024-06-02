@@ -14,4 +14,13 @@ class Booking(db.Model):
 		if self.day_in_week is not None:
 			return f"Book every {self.day_in_week} from {self.time_from} to {self.time_to}"
 		return f"Book {self.date.strftime('%Y-%m-%d')} from {self.time_from} to {self.time_to}"
+	
+	def to_dict(self) -> dict:
+		return {
+			'id': self.id,
+			'date': self.date.strftime('%Y-%m-%d'),
+			'day_in_week': self.day_in_week,
+			'time_from': self.time_from,
+			'time_to': self.time_to,
+		}
 

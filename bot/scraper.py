@@ -3,6 +3,13 @@ from bs4 import BeautifulSoup
 from datetime import datetime
 import os
 from urllib.parse import urljoin, urlparse
+from enum import Enum
+
+
+class BookingStatus(Enum):
+	SUCCESS = 1
+	FAILED = 2
+	NOT_AVAILABLE = 3
 
 
 def get_host(url):
@@ -44,28 +51,37 @@ class Scraper:
 
 	def get_booked_courts(self):
 		# TODO
-		pass
+		return {
+			'date': '2024-06-02',
+			'time_from': '11',
+			'time_to': '13'
+		}
 
-	def time_booked(self, date_str: str, time_from: int, time_to: int):
+	def time_available(self, date: str, time_from, time_to):
 		# TODO
 		return True
 
-	def book_court(self, date: datetime, time_from: int, time_to: int):
-		date_str = date.strftime('%Y-%m-%d')
+	def time_booked(self, date: str, time_from: int, time_to: int):
+		# TODO
+		return True
+
+	def book_court(self, date: str, time_from: int, time_to: int) -> BookingStatus:
+		if not self.time_available(date, time_from, time_to):
+			return BookingStatus.NOT_AVAILABLE
 		booking_url = urljoin(self.url, self.court_booking_path)
 		for i in range(1, self.num_courts + 1):
 			court_booking_url = urljoin(booking_url, str(i))
 			res = self.session.post(court_booking_url, headers=HEADERS, timeout=5, params={
 				'Date': datetime.now().strftime('%Y-%m-%d')
 			}, data={
-				'DateFrom': date_str,
+				'DateFrom': date,
 				'TimeFrom': str(time_from),
 				'TimeTo': str(time_to),
 				'accept_terms_checkbox': 'on',
 				'accept_terms_checkbox2': 'on',
 			})
 			
-			if self.time_booked(date_str, time_from, time_to):
-				return True
+			if self.time_booked(date, time_from, time_to):
+				return BookingStatus.SUCCESS
 		
-		return False
+		return BookingStatus.FAILED

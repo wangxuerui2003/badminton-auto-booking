@@ -2,73 +2,82 @@ import time
 from datetime import datetime, timedelta
 import schedule
 from threading import Thread, Event
-from flaskr.models.booking import Booking
-from bot.scraper import Scraper
+from scraper import Scraper
+import os
+import redis
+import json
 
 
-class BookingBot:
-	def __init__(self, bookings: list[Booking] = []):
-		self.repeated_jobs: dict[str, schedule.Job] = {}
+REDIS_HOST = os.environ.get('REDIS_HOST') or 'localhost'
+REDIS_PORT = os.environ.get('REDIS_PORT') or 6379
+r = redis.Redis(host=REDIS_HOST, port=REDIS_PORT, db=0)
+
+REDIS_QUEUE_KEY = os.environ.get('REDIS_QUEUE_KEY') or "1234"
+
+
+class BookingInfo:
+	def __init__(self, booking_dict: dict):
+		self.id = booking_dict.get('id', None)
+		self.date = booking_dict.get('date', None)
+		self.day_in_week = booking_dict.get('day_in_week', None)
+		self.time_from = booking_dict.get('time_from', None)
+		self.time_to = booking_dict.get('time_to', None)
+
+
+class BookingBot(Thread):
+	def __init__(self, *args, **kwargs):
+		super().__init__(*args, **kwargs)
 		self.jobs: dict[str, schedule.Job] = {}
 		self.stop_run = Event()
-		self.thread = None
-		for booking in bookings:
-			self.add_job(booking)
+		self.interval = kwargs.get('interval', 1)
 
-	def add_job(self, booking: Booking):
+	def read_job(self):
+		''' Read jobs from redis and add to bot '''
+		booking_str = r.lpop(REDIS_QUEUE_KEY)
+		if not booking_str:
+			return
+		booking_dict = json.loads(booking_str)
+		booking = BookingInfo(booking_dict)
+		self.add_job(booking)
+
+	def add_job(self, booking: BookingInfo):
 		''' Add a job to bot '''
 		is_repeated = booking.day_in_week is not None
 		# TODO: optimize this in the future with _calculate_job_exe_time
 		job = schedule.every(10).seconds.do(self._job, is_repeated, booking)
 		if is_repeated:
-			self.repeated_jobs[booking.id] = job
-		else:
 			self.jobs[booking.id] = job
 
 	def remove_job(self, id):
 		''' Remove a job from bot '''
-		if self.repeated_jobs.get(id):
-			job = self.repeated_jobs.pop(id)
-		elif self.jobs.get(id):
+		if self.jobs.get(id):
 			job = self.jobs.pop(id)
-		else:
-			return
-		schedule.cancel_job(job)
-		
+			schedule.cancel_job(job)
 
-	def run_jobs(self, interval=1):
-		''' Infinite loop that runs schedule pending jobs '''
-		while not self.stop_run.is_set():
-			schedule.run_pending()
-			time.sleep(interval)
-
-	def _job(self, repeat: bool, booking: Booking):
+	def _job(self, repeat: bool, booking: BookingInfo):
 		''' The core court booking bot function '''
 		print("Running job...")
 		date = booking.date
 		if repeat:
 			date = get_next_weekday(booking.day_in_week)
-		bot = Scraper(date, booking.time_from, booking.time_to)
-		if not bot.book_court():
+		bot = Scraper()
+		if not bot.book_court(date, booking.time_from, booking.time_to):
 			return
 		if repeat:
 			return
 		self.remove_job(booking.id)
 		return schedule.CancelJob
 
-	def start(self, interval=1):
+	def run(self):
 		''' Start the bot '''
-		if self.thread is None:
-			self.stop_run.clear()
-			self.thread = Thread(target=self.run_jobs, args=(interval,))
-			self.thread.start()
+		while not self.stop_run.is_set():
+			self.read_job()
+			schedule.run_pending()
+			time.sleep(self.interval)
 
 	def stop(self):
 		''' Stop the bot '''
 		self.stop_run.set()
-		if self.thread is not None:
-			self.thread.join()
-			self.thread = None
 
 	def _calculate_job_exe_time(self):
 		pass

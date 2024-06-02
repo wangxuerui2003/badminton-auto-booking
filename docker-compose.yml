@@ -1,0 +1,53 @@
+version: '3.8'
+
+services:
+  web:
+    build: ./web
+    container_name: web
+    ports:
+      - "5000:5000"
+    env_file:
+      - .env
+    depends_on:
+      - db
+    networks:
+      - default_network
+
+  db:
+    image: postgres:latest
+    container_name: postgres
+    restart: always
+    environment:
+      POSTGRES_USER: root
+      POSTGRES_PASSWORD: db_password
+      POSTGRES_DB: flask_database
+    volumes:
+      - db_data:/var/lib/postgresql/db_data
+    networks:
+      - default_network
+
+  bot:
+    build: ./bot
+    container_name: bot
+    restart: always
+    depends_on:
+      - web
+    env_file:
+      - .env
+    networks:
+      - default_network
+  
+  redis:
+    image: "redis:alpine"
+    container_name: redis
+    networks:
+      - default_network
+
+
+networks:
+  default_network:
+
+
+volumes:
+  db_data:
+

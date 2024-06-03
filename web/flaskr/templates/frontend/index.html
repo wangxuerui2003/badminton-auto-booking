@@ -5,8 +5,29 @@ User Home Page
 {% endblock %}
 
 {% block content %}
-This is the user index page
 
-{{ booked_courts }}
+<div class="container my-5">
+	<h1 class="mb-4">Booked Courts</h1>
+	<table class="table table-striped">
+		<thead>
+			<tr>
+				<th scope="col">Facility</th>
+				<th scope="col">Date</th>
+				<th scope="col">Time From</th>
+				<th scope="col">Time To</th>
+			</tr>
+		</thead>
+		<tbody>
+			{% for booking in booked_courts %}
+			<tr>
+				<td>{{ booking.facility }}</td>
+				<td>{{ booking.date }}</td>
+				<td>{{ booking.time_from }}</td>
+				<td>{{ booking.time_to }}</td>
+			</tr>
+			{% endfor %}
+		</tbody>
+	</table>
+</div>
 
 {% endblock %}

@@ -1,5 +1,3 @@
-# TODO: run the booking bot in another thread
-
 from fastapi import FastAPI
 from scraper import Scraper
 from booking_bot import BookingBot

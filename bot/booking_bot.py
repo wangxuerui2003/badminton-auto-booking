@@ -6,13 +6,14 @@ from scraper import Scraper
 import os
 import redis
 import json
+from scraper import BookingStatus
 
 
 REDIS_HOST = os.environ.get('REDIS_HOST') or 'localhost'
 REDIS_PORT = os.environ.get('REDIS_PORT') or 6379
-r = redis.Redis(host=REDIS_HOST, port=REDIS_PORT, db=0)
-
 REDIS_QUEUE_KEY = os.environ.get('REDIS_QUEUE_KEY') or "1234"
+
+r = redis.Redis(host=REDIS_HOST, port=REDIS_PORT, db=0)
 
 
 class BookingInfo:
@@ -56,12 +57,12 @@ class BookingBot(Thread):
 
 	def _job(self, repeat: bool, booking: BookingInfo):
 		''' The core court booking bot function '''
-		print("Running job...")
 		date = booking.date
 		if repeat:
 			date = get_next_weekday(booking.day_in_week)
 		bot = Scraper()
-		if not bot.book_court(date, booking.time_from, booking.time_to):
+		booking_status = bot.book_court(date, booking.time_from, booking.time_to)
+		if booking_status == BookingStatus.FAILED:
 			return
 		if repeat:
 			return

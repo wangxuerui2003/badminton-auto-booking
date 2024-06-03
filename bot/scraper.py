@@ -10,6 +10,7 @@ class BookingStatus(Enum):
 	SUCCESS = 1
 	FAILED = 2
 	NOT_AVAILABLE = 3
+	TOO_EARLY = 4
 
 
 def get_host(url):
@@ -38,7 +39,8 @@ class Scraper:
 		self.session = Session()
 		self.url = WEBSITE_URL
 		self.login_url = os.environ.get('LOGIN_URL')
-		self.court_booking_path = os.environ.get('COURT_BOOKING_PATH')
+		self.court_booking_path = urljoin(self.url, os.environ.get('COURT_BOOKING_PATH'))
+		self.current_courts_path = urljoin(self.url, os.environ.get('CURRENT_COURTS_PATH'))
 		self.num_courts = int(os.environ.get('NUM_COURTS'))
 		self.login()
 
@@ -50,12 +52,24 @@ class Scraper:
 		})
 
 	def get_booked_courts(self):
-		# TODO
-		return {
-			'date': '2024-06-02',
-			'time_from': '11',
-			'time_to': '13'
-		}
+		r = self.session.get(self.current_courts_path, headers=HEADERS)
+		if not r.ok:
+			return {}
+		soup = BeautifulSoup(r.text, 'html.parser')
+		booking_table = soup.select_one('.kt-portlet__body .table')
+		headers = ['facility', '', 'date', 'time_from', 'time_to', '', '']
+		data = []
+		for row in booking_table.find_all('tr')[1:]:  # Skip the header row
+			cells = row.find_all('td')
+			if len(cells) > 0:
+				row_data = {}
+				for i, cell in enumerate(cells):
+					if headers[i] == '':
+						continue
+					row_data[headers[i]] = cell.text.strip()
+				if row_data['facility'].lower().startswith('badminton'):
+					data.append(row_data)
+		return data
 
 	def time_available(self, date: str, time_from, time_to):
 		# TODO
@@ -68,7 +82,7 @@ class Scraper:
 	def book_court(self, date: str, time_from: int, time_to: int) -> BookingStatus:
 		if not self.time_available(date, time_from, time_to):
 			return BookingStatus.NOT_AVAILABLE
-		booking_url = urljoin(self.url, self.court_booking_path)
+		booking_url = self.court_booking_path
 		for i in range(1, self.num_courts + 1):
 			court_booking_url = urljoin(booking_url, str(i))
 			res = self.session.post(court_booking_url, headers=HEADERS, timeout=5, params={

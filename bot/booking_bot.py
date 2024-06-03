@@ -7,6 +7,7 @@ import os
 import redis
 import json
 from scraper import BookingStatus
+import sys
 
 
 REDIS_HOST = os.environ.get('REDIS_HOST') or 'localhost'

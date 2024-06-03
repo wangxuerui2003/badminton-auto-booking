@@ -20,7 +20,10 @@ REDIS_QUEUE_KEY = os.environ.get('REDIS_QUEUE_KEY') or "1234"
 @admin_bp.route('/')
 @login_required
 def index():
-    return render_template('admin/index.html')
+    # TODO: read jobs history and status from bot and display
+    # TODO: add navbar for adding and removing tasks
+    tasks = Booking.query.all()
+    return render_template('admin/index.html', tasks=tasks)
 
 @admin_bp.route('/new_task', methods=["GET", "POST"])
 @login_required

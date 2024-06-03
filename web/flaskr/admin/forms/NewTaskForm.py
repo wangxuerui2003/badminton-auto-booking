@@ -5,7 +5,7 @@ from wtforms.validators import DataRequired, ValidationError
 
 
 def weekday_to_int(weekday_str: str):
-    if weekday_str is None:
+    if weekday_str is None or weekday_str == '':
         return None
     weekdays = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']
     weekday_int = weekdays.index(weekday_str)

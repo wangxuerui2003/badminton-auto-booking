@@ -20,7 +20,7 @@ class BookingInfo:
 	def __init__(self, booking_dict: dict):
 		self.id = booking_dict.get('id', None)
 		self.date = booking_dict.get('date', None)
-		self.day_in_week = booking_dict.get('day_in_week', None)
+		self.weekday = booking_dict.get('weekday', None)
 		self.time_from = booking_dict.get('time_from', None)
 		self.time_to = booking_dict.get('time_to', None)
 
@@ -43,7 +43,7 @@ class BookingBot(Thread):
 
 	def add_job(self, booking: BookingInfo):
 		''' Add a job to bot '''
-		is_repeated = booking.day_in_week is not None
+		is_repeated = booking.weekday is not None
 		# TODO: optimize this in the future with _calculate_job_exe_time
 		job = schedule.every(10).seconds.do(self._job, is_repeated, booking)
 		if is_repeated:
@@ -59,7 +59,7 @@ class BookingBot(Thread):
 		''' The core court booking bot function '''
 		date = booking.date
 		if repeat:
-			date = get_next_weekday(booking.day_in_week)
+			date = get_next_weekday(booking.weekday)
 		bot = Scraper()
 		booking_status = bot.book_court(date, booking.time_from, booking.time_to)
 		if booking_status == BookingStatus.FAILED:

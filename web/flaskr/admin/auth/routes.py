@@ -3,17 +3,7 @@ from flask_login import login_required, login_user, logout_user
 from flaskr.admin import admin_bp
 from flaskr.extensions import login_manager
 from flaskr.models.admin import Admin
-from flask_wtf import FlaskForm
-from flask_wtf.form import _Auto
-from wtforms import StringField, PasswordField, SubmitField
-from wtforms.validators import DataRequired
-from flaskr.models.admin import Admin
-
-
-class LoginForm(FlaskForm):
-	username = StringField('Username', validators=[DataRequired()])
-	password = PasswordField('Password', validators=[DataRequired()])
-	submit = SubmitField('Login')
+from flaskr.admin.forms.LoginForm import LoginForm
 
 
 @login_manager.user_loader

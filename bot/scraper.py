@@ -68,6 +68,7 @@ class Scraper:
 						continue
 					row_data[headers[i]] = cell.text.strip()
 				if row_data['facility'].lower().startswith('badminton'):
+					row_data['date'] = datetime.strptime(row_data['date'], '%d-%m-%Y').strftime('%Y-%m-%d')
 					data.append(row_data)
 		return data
 

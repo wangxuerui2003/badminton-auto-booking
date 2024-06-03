@@ -1,6 +1,7 @@
-from flask import jsonify, render_template, request
+from flask import abort, jsonify, redirect, render_template, request, url_for
 from flask_login import login_required
 from flaskr.admin import admin_bp
+from flaskr.admin.forms.NewTaskForm import NewTaskForm
 from .auth import routes
 from flaskr.models.booking import Booking
 from flaskr.extensions import db
@@ -19,17 +20,22 @@ REDIS_QUEUE_KEY = os.environ.get('REDIS_QUEUE_KEY') or "1234"
 @admin_bp.route('/')
 @login_required
 def index():
-    # TODO: display a UI for admin to adjust the desired court time in day, day in week
     return render_template('admin/index.html')
 
-@admin_bp.route('/new_task', methods=["POST"])
+@admin_bp.route('/new_task', methods=["GET", "POST"])
 @login_required
 def new_task():
-    data = request.form
-    # booking = Booking(date='2024-06-02', time_from=11, time_to=13)
-    # db.session.add(booking)
-    # db.session.commit()
-    # r.rpush(REDIS_QUEUE_KEY, json.dumps(booking.to_dict()))
-    return jsonify(data)
+    if request.method == 'GET':
+        return render_template('admin/new_task.html')
+    form: NewTaskForm = NewTaskForm()
+    if form.validate_on_submit():
+        booking = Booking(date=form.date.data,
+                          weekday=form.weekday.data, time_from=form.time_from.data, time_to=form.time_to.data)
+        db.session.add(booking)
+        db.session.commit()
+        r.rpush(REDIS_QUEUE_KEY, json.dumps(booking.to_dict()))
+        return redirect(url_for('admin.index'))
+    return 'Error', 400
+
 
 

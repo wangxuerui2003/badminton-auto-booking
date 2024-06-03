@@ -1,76 +1,10 @@
 {% extends 'base.html' %}
 
 {% block title %}
-Admin Index Page
+Admin Index
 {% endblock %}
 
 {% block content %}
 
-<div class="container my-5">
-	<h1 class="mb-4">Booking Form</h1>
-	<form action="{{ url_for('admin.new_task') }}" method="POST">
-		<div class="mb-3">
-			<label for="date" class="form-label">Select Date</label>
-			<input type="date" class="form-control" id="date" name="date" min="{{ today }}">
-		</div>
-		<div class="mb-3">
-			<label for="weekday" class="form-label">Select Weekday</label>
-			<select class="form-select" id="weekday" name="day_in_week">
-				<option value="" selected>Select a weekday</option>
-				<option value="Monday">Monday</option>
-				<option value="Tuesday">Tuesday</option>
-				<option value="Wednesday">Wednesday</option>
-				<option value="Thursday">Thursday</option>
-				<option value="Friday">Friday</option>
-				<option value="Saturday">Saturday</option>
-				<option value="Sunday">Sunday</option>
-			</select>
-		</div>
-		<div class="mb-3">
-			<label for="time_from" class="form-label">Time From</label>
-			<select class="form-select" id="time_from" name="time_from">
-				{% for hour in range(7, 22) %}
-					<option value="{{ hour }}">{{ hour }}:00</option>
-				{% endfor %}
-			</select>
-		</div>
-		<div class="mb-3">
-			<label for="time_to" class="form-label">Time To</label>
-			<select class="form-select" id="time_to" name="time_to">
-				{% for hour in range(8, 23) %}
-					<option value="{{ hour }}">{{ hour }}:00</option>
-				{% endfor %}
-			</select>
-		</div>
-		<button type="submit" class="btn btn-primary">Submit</button>
-	</form>
-</div>
-
-<!-- Bootstrap Bundle with Popper -->
-<script src="https://stackpath.bootstrapcdn.com/bootstrap/5.1.0/js/bootstrap.bundle.min.js"></script>
-
-<!-- Custom Script -->
-<script>
-	document.addEventListener('DOMContentLoaded', function() {
-		const today = new Date().toISOString().split('T')[0];
-		document.getElementById('date').setAttribute('min', today);
-
-		document.getElementById('time_from').addEventListener('change', function() {
-			const timeFrom = parseInt(this.value);
-			const timeToSelect = document.getElementById('time_to');
-			
-			// Clear current options
-			timeToSelect.innerHTML = '';
-			
-			// Add new options
-			for (let hour = timeFrom + 1; hour <= timeFrom + 2; hour++) {
-				const option = document.createElement('option');
-				option.value = hour;
-				option.text = `${hour}:00`;
-				timeToSelect.appendChild(option);
-			}
-		});
-	});
-</script>
 
 {% endblock %}

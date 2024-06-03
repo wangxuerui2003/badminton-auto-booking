@@ -1,15 +1,17 @@
-version: '3.8'
+version: '3'
 
 services:
   web:
     build: ./web
     container_name: web
+    restart: always
     ports:
       - "5000:5000"
     env_file:
       - .env
     depends_on:
-      - db
+      db:
+        condition: service_healthy
     networks:
       - default_network
 
@@ -25,6 +27,11 @@ services:
       - db_data:/var/lib/postgresql/db_data
     networks:
       - default_network
+    healthcheck:
+      test: pg_isready -U myuser -d db_prod
+      interval: 5s
+      timeout: 3s
+      retries: 3
 
   bot:
     build: ./bot

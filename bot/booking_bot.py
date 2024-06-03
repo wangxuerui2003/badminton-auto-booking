@@ -59,7 +59,7 @@ class BookingBot(Thread):
 		''' The core court booking bot function '''
 		date = booking.date
 		if repeat:
-			date = get_next_weekday(booking.weekday)
+			date = get_next_weekday(booking.weekday).strftime('%Y-%m-%d')
 		bot = Scraper()
 		booking_status = bot.book_court(date, booking.time_from, booking.time_to)
 		if booking_status == BookingStatus.FAILED:

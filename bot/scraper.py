@@ -54,7 +54,7 @@ class Scraper:
 	def get_booked_courts(self):
 		r = self.session.get(self.current_courts_path, headers=HEADERS)
 		if not r.ok:
-			return {}
+			return []
 		soup = BeautifulSoup(r.text, 'html.parser')
 		booking_table = soup.select_one('.kt-portlet__body .table')
 		headers = ['facility', '', 'date', 'time_from', 'time_to', '', '']
@@ -72,20 +72,48 @@ class Scraper:
 					data.append(row_data)
 		return data
 
-	def time_available(self, date: str, time_from, time_to):
-		# TODO
-		return True
+	def time_available(self, date: str, time_from: int, time_to: int):
+		if time_to - time_from > 2 or time_to - time_from < 1:
+			return False
+		for i in range(1, self.num_courts + 1):
+			court_booking_url = urljoin(self.court_booking_path, str(i))
+			r = self.session.get(court_booking_url, headers=HEADERS, timeout=5, params={
+				'Date': date
+			})
+			if not r.ok:
+				return False
+			soup = BeautifulSoup(r.text, 'html.parser')
+			booking_table = soup.select_one('.kt-portlet__body .table')
+			avaibale = True
+			for time, row in enumerate(booking_table.find_all('tr')[1:], start=7):  # Skip the header row
+				if time != time_from and time != time_to - 1:
+					continue
+				cells = row.find_all('td')
+				if len(cells) <= 0:
+					avaibale = False
+				if cells[1].text.strip() != 'Available':
+					avaibale = False
+					break
+			if avaibale:
+				return True
+		return False
 
 	def time_booked(self, date: str, time_from: int, time_to: int):
-		# TODO
-		return True
+		booked_courts = self.get_booked_courts()
+		for booked_court in booked_courts:
+			booked_court['time_from'] = datetime.strptime(booked_court['time_from'], "%I:%M %p").hour
+			booked_court['time_to'] = datetime.strptime(booked_court['time_to'], "%I:%M %p").hour
+			if booked_court['date'] == date and booked_court['time_from'] == time_from and booked_court['time_to'] == time_to:
+				return True
+		return False
 
 	def book_court(self, date: str, time_from: int, time_to: int) -> BookingStatus:
 		if not self.time_available(date, time_from, time_to):
 			return BookingStatus.NOT_AVAILABLE
-		booking_url = self.court_booking_path
+		if self.time_booked(date, time_from, time_to):
+			return BookingStatus.SUCCESS
 		for i in range(1, self.num_courts + 1):
-			court_booking_url = urljoin(booking_url, str(i))
+			court_booking_url = urljoin(self.court_booking_path, str(i))
 			res = self.session.post(court_booking_url, headers=HEADERS, timeout=5, params={
 				'Date': datetime.now().strftime('%Y-%m-%d')
 			}, data={

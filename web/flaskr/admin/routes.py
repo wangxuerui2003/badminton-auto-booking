@@ -2,16 +2,17 @@ from flask import abort, flash, jsonify, redirect, render_template, request, url
 from flask_login import login_required
 from flaskr.admin import admin_bp
 from flaskr.admin.forms.NewTaskForm import NewTaskForm
+from flaskr.models.booking_history import BookingHistory
 from .auth import routes
 from flaskr.models.booking import Booking
-from flaskr.extensions import db, redis_conn, REDIS_JOBS_QUEUE_KEY
+from flaskr.extensions import db, redis_conn, REDIS_JOBS_QUEUE_KEY, REDIS_HISTORY_QUEUE_KEY
 import json
+from datetime import datetime
 
 
 @admin_bp.route('/')
 @login_required
 def index():
-    # TODO: read jobs history and status from bot and display
     tasks = Booking.query.all()
     return render_template('admin/index.html', tasks=tasks)
 
@@ -42,6 +43,22 @@ def delete_task():
         return redirect(url_for('admin.index'))
     flash('Task not found', 'danger')
     return redirect(url_for('admin.index'))
+
+@admin_bp.route('/history', methods=['GET'])
+@login_required
+def history():
+    history_str = redis_conn.lpop(REDIS_HISTORY_QUEUE_KEY)
+    while history_str:
+        history = json.loads(history_str)
+        booking_history = BookingHistory(
+            target_date=datetime.strptime(history['target_date'], "%Y-%m-%d"),
+            booking_id=history['booking_id'],
+            status=history['status'])
+        db.session.add(booking_history)
+        db.session.commit()
+        history_str = redis_conn.lpop(REDIS_HISTORY_QUEUE_KEY)
+    histories = BookingHistory.query.all()
+    return render_template('admin/history.html', histories=histories)
     
 
 

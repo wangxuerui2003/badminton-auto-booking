@@ -3,6 +3,7 @@ from flaskr import create_app
 from flaskr.extensions import db, redis_conn, REDIS_JOBS_QUEUE_KEY
 from flaskr.models.admin import Admin
 from flaskr.models.booking import Booking
+from flaskr.models.booking_history import BookingHistory
 import json
 
 

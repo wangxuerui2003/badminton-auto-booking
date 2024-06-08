@@ -1,0 +1,37 @@
+{% extends 'admin/admin-base.html' %}
+
+{% block title %}
+Task History
+{% endblock %}
+
+{% block content %}
+
+<div class="container mt-5">
+	<h1 class="mb-4">Booking Histories</h1>
+	<table class="table table-striped">
+			<thead>
+					<tr>
+							<th scope="col">ID</th>
+							<th scope="col">Target Date</th>
+							<th scope="col">Target Time From</th>
+							<th scope="col">Target Time To</th>
+							<th scope="col">Created At</th>
+							<th scope="col">Status</th>
+					</tr>
+			</thead>
+			<tbody>
+					{% for history in histories %}
+					<tr>
+							<td>{{ history.id }}</td>
+							<td>{{ history.target_date.strftime('%Y-%m-%d') if history.target_date else 'N/A' }}</td>
+							<td>{{ history.booking.time_from }}</td>
+							<td>{{ history.booking.time_to }}</td>
+							<td>{{ history.created_at.strftime('%Y-%m-%d, %H:%M:%S') }}</td>
+							<td>{{ history.status }}</td>
+					</tr>
+					{% endfor %}
+			</tbody>
+	</table>
+</div>
+
+{% endblock %}

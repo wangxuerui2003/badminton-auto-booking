@@ -5,8 +5,10 @@
 	<meta name="viewport" content="width=device-width, initial-scale=1.0">
 	<title>{% block title %} {% endblock %} - BCAB</title>
 	<link rel="stylesheet" type="text/css" href="/css/bootstrap/bootstrap.css" />
+	<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
 </head>
 <body>
+	{% block nav %} {% endblock %}
 	<div class="container">
     <!-- Flash Messages Block -->
     {% with messages = get_flashed_messages(with_categories=true) %}

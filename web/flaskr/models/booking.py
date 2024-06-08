@@ -23,4 +23,18 @@ class Booking(db.Model):
 			'time_from': self.time_from,
 			'time_to': self.time_to,
 		}
+	
+	def is_past(self) -> bool:
+		if self.date is None:
+			return False
+		return self.date < datetime.now()
+	
+	def is_repeated(self) -> bool:
+		return self.weekday is not None
+
+	@staticmethod
+	def is_ongoing_task_query() -> bool:
+		if Booking.date is None:
+			return True
+		return Booking.date >= datetime.now()
 

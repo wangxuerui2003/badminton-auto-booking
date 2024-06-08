@@ -10,6 +10,8 @@ services:
     depends_on:
       db:
         condition: service_healthy
+      bot:
+        condition: service_started
     networks:
       - default_network
 
@@ -36,7 +38,7 @@ services:
     container_name: bot
     restart: always
     depends_on:
-      - web
+      - redis
     env_file:
       - .env
     networks:

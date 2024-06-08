@@ -24,11 +24,11 @@ services:
       POSTGRES_PASSWORD: db_password
       POSTGRES_DB: flask_database
     volumes:
-      - db_data:/var/lib/postgresql/db_data
+      - db_data:/var/lib/postgresql/data
     networks:
       - default_network
     healthcheck:
-      test: pg_isready -U myuser -d db_prod
+      test: pg_isready -U root -d flask_database
       interval: 5s
       timeout: 3s
       retries: 3

@@ -16,6 +16,7 @@ Admin Index
 							<th scope="col">Weekday</th>
 							<th scope="col">Time From</th>
 							<th scope="col">Time To</th>
+							<th scope="col">Status</th>
 							<th scope="col">Actions</th>
 					</tr>
 			</thead>
@@ -24,9 +25,10 @@ Admin Index
 					<tr>
 							<td>{{ task.id }}</td>
 							<td>{{ task.date.strftime('%Y-%m-%d') if task.date else 'N/A' }}</td>
-							<td>{{ task.weekday if task.weekday is not none else 'N/A' }}</td>
+							<td>{{ task.str_weekday() }}</td>
 							<td>{{ task.time_from }}</td>
 							<td>{{ task.time_to }}</td>
+							<td>{{ task.status() }}</td>
 							<td>
 								<form method="POST" action="{{ url_for('admin.delete_task') }}">
 									<input type="hidden" name="task_id" value="{{ task.id }}"/>

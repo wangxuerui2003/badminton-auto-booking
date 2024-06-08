@@ -1,6 +1,8 @@
+from typing import List
 from flaskr.extensions import db
 from sqlalchemy.orm import Mapped, mapped_column
 from datetime import datetime
+import calendar
 
 
 class Booking(db.Model):
@@ -9,6 +11,9 @@ class Booking(db.Model):
 	weekday: Mapped[int] = mapped_column(nullable=True)  # 0-6, repeat every week
 	time_from: Mapped[int] = mapped_column(nullable=False)  # 7 to 22
 	time_to: Mapped[int] = mapped_column(nullable=False)  # 7 to 22
+	histories: Mapped[List['BookingHistory']] = db.relationship(
+        'BookingHistory', backref='booking', cascade='all, delete-orphan', lazy=True
+    )
 
 	def __repr__(self) -> str:
 		if self.weekday is not None:
@@ -31,10 +36,22 @@ class Booking(db.Model):
 	
 	def is_repeated(self) -> bool:
 		return self.weekday is not None
+	
+	def status(self) -> str:
+		if self.weekday:
+			return "N/A"
+		for history in self.histories:
+			if history.status.lower() == 'success':
+				return 'success'
+		return 'fail'
+	
+	def str_weekday(self) -> str:
+		if not self.weekday:
+			return "N/A"
+		return calendar.day_name[self.weekday]
 
 	@staticmethod
 	def is_ongoing_task_query() -> bool:
 		if Booking.date is None:
 			return True
 		return Booking.date >= datetime.now()
-

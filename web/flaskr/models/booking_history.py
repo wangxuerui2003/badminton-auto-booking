@@ -12,7 +12,7 @@ class BookingHistory(db.Model):
 	booking_id: Mapped[int] = mapped_column(ForeignKey('booking.id'), nullable=False)
 	created_at: Mapped[datetime] = mapped_column(default=datetime.now(), nullable=False)
 	status: Mapped[str] = mapped_column(nullable=False)
-	booking: Mapped['Booking'] = db.relationship('Booking', backref=db.backref('histories', lazy=True))
+	# booking: Mapped['Booking'] = db.relationship('Booking', backref=db.backref('histories', lazy=True))
 
 	def __repr__(self) -> str:
 		return f"<BookingHistory {self.id} - At {self.created_at} - Status {self.status}>"

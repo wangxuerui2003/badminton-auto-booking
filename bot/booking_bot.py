@@ -14,6 +14,7 @@ REDIS_HOST = os.environ.get('REDIS_HOST') or 'localhost'
 REDIS_PORT = os.environ.get('REDIS_PORT') or 6379
 REDIS_JOBS_QUEUE_KEY = os.environ.get('REDIS_JOBS_QUEUE_KEY') or "1234"
 REDIS_HISTORY_QUEUE_KEY = os.environ.get('REDIS_HISTORY_QUEUE_KEY') or "1234"
+BOOKING_INTERVAL_MINUTES = int(os.environ.get('BOOKING_INTERVAL_MINUTES') or '1')
 
 r = redis.Redis(host=REDIS_HOST, port=REDIS_PORT, db=0)
 
@@ -56,8 +57,7 @@ class BookingBot(Thread):
 	def add_job(self, booking: BookingInfo):
 		''' Add a job to bot '''
 		# TODO: optimize this in the future with _calculate_job_exe_time
-		# job = schedule.every(10).seconds.do(self._job, booking)
-		job = schedule.every().hour.do(self._job, booking)
+		job = schedule.every(BOOKING_INTERVAL_MINUTES).minutes.do(self._job, booking)
 		self.jobs[booking.id] = job
 
 	def remove_job(self, id):
@@ -65,12 +65,14 @@ class BookingBot(Thread):
 		if self.jobs.get(id):
 			job = self.jobs.pop(id)
 			schedule.cancel_job(job)
+			return True
+		return False
 
 	def schedule_repeated_jobs(self):
-		for repeated_job in self.repeated_jobs:
+		for i, repeated_job in enumerate(self.repeated_jobs):
 			if repeated_job.is_past():
-				repeated_job.date = get_next_weekday(repeated_job.weekday).strftime('%Y-%m-%d')
-				self.add_job(repeated_job)
+				self.repeated_jobs[i].date = get_next_weekday(repeated_job.weekday).strftime('%Y-%m-%d')
+				self.add_job(self.repeated_jobs[i])
 
 	def _job(self, booking: BookingInfo):
 		''' The core court booking bot function '''
@@ -85,12 +87,12 @@ class BookingBot(Thread):
 			return schedule.CancelJob
 		bot = Scraper()
 		booking_status = bot.book_court(date, booking.time_from, booking.time_to)
-		r.rpush(REDIS_HISTORY_QUEUE_KEY, json.dumps({
-				"booking_id": booking.id,
-				"target_date": booking.date,
-				"status": booking_status.name
-			}))
-		if booking_status == BookingStatus.FAILED:
+		# r.rpush(REDIS_HISTORY_QUEUE_KEY, json.dumps({
+		# 		"booking_id": booking.id,
+		# 		"target_date": booking.date,
+		# 		"status": booking_status.name
+		# 	}))
+		if booking_status != BookingStatus.SUCCESS:
 			return
 		r.rpush(REDIS_HISTORY_QUEUE_KEY, json.dumps({
 			"booking_id": booking.id,
@@ -122,11 +124,3 @@ def get_next_weekday(weekday: int):
     days_until_next = (weekday - today_weekday + 7) % 7
     next_weekday_date = today + timedelta(days=days_until_next)
     return next_weekday_date.date()
-
-# def combine_date_and_times(date_str: str, time_from: int, time_to: int) -> tuple:
-#     date = datetime.strptime(date_str, "%Y-%m-%d")
-#     datetime_from = datetime.combine(date, datetime.min.time()) + timedelta(hours=time_from)
-#     datetime_to = datetime.combine(date, datetime.min.time()) + timedelta(hours=time_to)
-
-#     return datetime_from.strftime("%Y-%m-%d, %H:%M:%S"), datetime_to.strftime("%Y-%m-%d, %H:%M:%S")
-

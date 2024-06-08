@@ -1,6 +1,6 @@
 import os
 from flaskr import create_app
-from flaskr.extensions import db, redis_conn, REDIS_QUEUE_KEY
+from flaskr.extensions import db, redis_conn, REDIS_JOBS_QUEUE_KEY
 from flaskr.models.admin import Admin
 from flaskr.models.booking import Booking
 import json
@@ -19,7 +19,7 @@ def create_super_admin():
 def init_tasks():
     tasks = Booking.query.filter(~Booking.is_ongoing_task_query()).all()
     for task in tasks:
-        redis_conn.rpush(REDIS_QUEUE_KEY, json.dumps(task.to_dict()))
+        redis_conn.rpush(REDIS_JOBS_QUEUE_KEY, json.dumps(task.to_dict()))
 
 
 if __name__ == "__main__":

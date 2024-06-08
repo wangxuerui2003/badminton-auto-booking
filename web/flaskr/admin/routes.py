@@ -4,7 +4,7 @@ from flaskr.admin import admin_bp
 from flaskr.admin.forms.NewTaskForm import NewTaskForm
 from .auth import routes
 from flaskr.models.booking import Booking
-from flaskr.extensions import db, redis_conn, REDIS_QUEUE_KEY
+from flaskr.extensions import db, redis_conn, REDIS_JOBS_QUEUE_KEY
 import json
 
 
@@ -26,7 +26,7 @@ def new_task():
                           weekday=form.weekday.data, time_from=form.time_from.data, time_to=form.time_to.data)
         db.session.add(booking)
         db.session.commit()
-        redis_conn.rpush(REDIS_QUEUE_KEY, json.dumps(booking.to_dict()))
+        redis_conn.rpush(REDIS_JOBS_QUEUE_KEY, json.dumps(booking.to_dict()))
         return redirect(url_for('admin.index'))
     return 'Error', 400
 

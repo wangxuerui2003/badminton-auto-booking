@@ -12,7 +12,7 @@ import sys
 
 REDIS_HOST = os.environ.get('REDIS_HOST') or 'localhost'
 REDIS_PORT = os.environ.get('REDIS_PORT') or 6379
-REDIS_QUEUE_KEY = os.environ.get('REDIS_QUEUE_KEY') or "1234"
+REDIS_JOBS_QUEUE_KEY = os.environ.get('REDIS_JOBS_QUEUE_KEY') or "1234"
 
 r = redis.Redis(host=REDIS_HOST, port=REDIS_PORT, db=0)
 
@@ -33,9 +33,12 @@ class BookingBot(Thread):
 		self.stop_run = Event()
 		self.interval = kwargs.get('interval', 1)
 
+		# TODO: store repeated jobs and dispatch one-time job from them
+		self.repeated_jobs = []
+
 	def read_job(self):
 		''' Read jobs from redis and add to bot '''
-		booking_str = r.lpop(REDIS_QUEUE_KEY)
+		booking_str = r.lpop(REDIS_JOBS_QUEUE_KEY)
 		if not booking_str:
 			return
 		booking_dict = json.loads(booking_str)
@@ -61,10 +64,21 @@ class BookingBot(Thread):
 		date = booking.date
 		if repeat:
 			date = get_next_weekday(booking.weekday).strftime('%Y-%m-%d')
+		if datetime.strptime(date, '%Y-%m-%d') < datetime.now():
+			r.rpush(REDIS_JOBS_QUEUE_KEY, json.dumps({
+				"booking_id": booking.id,
+				"status": 'fail'
+			}))
+			self.remove_job(booking.id)
+			return schedule.CancelJob
 		bot = Scraper()
 		booking_status = bot.book_court(date, booking.time_from, booking.time_to)
 		if booking_status == BookingStatus.FAILED:
 			return
+		r.rpush(REDIS_JOBS_QUEUE_KEY, json.dumps({
+			"booking_id": booking.id,
+			"status": 'success'
+		}))
 		if repeat:
 			return
 		self.remove_job(booking.id)

@@ -4,7 +4,7 @@ import requests
 from urllib.parse import urljoin
 import os
 
-bot_get_booked_courts_url = urljoin(os.environ.get('BOT_HOST'), '/get-booked-courts')
+bot_get_booked_courts_url = urljoin(os.environ.get('BOT_HOST'), '/booked-courts')
 
 def get_booked_courts_from_bot():
     url = bot_get_booked_courts_url

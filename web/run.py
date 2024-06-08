@@ -30,4 +30,4 @@ if __name__ == "__main__":
         create_super_admin()
         init_tasks()
 
-    app.run(host="0.0.0.0")
+    # app.run(host="0.0.0.0")

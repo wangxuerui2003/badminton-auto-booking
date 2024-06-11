@@ -38,7 +38,7 @@ class BookingBot(Thread):
 	def __init__(self, *args, **kwargs):
 		super().__init__(*args, **kwargs)
 		self.jobs: dict[str, schedule.Job] = {}
-		self.repeated_jobs: list[BookingInfo] = []
+		self.repeated_jobs: dict[str, BookingInfo] = {}
 		self.stop_run = Event()
 		self.interval = kwargs.get('interval', 1)
 
@@ -49,8 +49,12 @@ class BookingBot(Thread):
 			return
 		booking_dict = json.loads(booking_str)
 		booking = BookingInfo(booking_dict)
+		if self.jobs.get(booking.id, None) is not None:
+			return
+		elif self.repeated_jobs.get(booking.id, None) is not None:
+			return
 		if booking.weekday is not None:
-			self.repeated_jobs.append(booking)
+			self.repeated_jobs[booking.id] = booking
 		else:
 			self.add_job(booking)
 
@@ -66,13 +70,16 @@ class BookingBot(Thread):
 			job = self.jobs.pop(id)
 			schedule.cancel_job(job)
 			return True
+		elif self.repeated_jobs.get(id):
+			self.repeated_jobs.pop(id)
+			return True
 		return False
 
 	def schedule_repeated_jobs(self):
-		for i, repeated_job in enumerate(self.repeated_jobs):
+		for id, repeated_job in self.repeated_jobs.items():
 			if repeated_job.is_past():
-				self.repeated_jobs[i].date = get_next_weekday(repeated_job.weekday).strftime('%Y-%m-%d')
-				self.add_job(self.repeated_jobs[i])
+				self.repeated_jobs[id].date = get_next_weekday(repeated_job.weekday).strftime('%Y-%m-%d') 
+				self.add_job(self.repeated_jobs[id])
 
 	def _job(self, booking: BookingInfo):
 		''' The core court booking bot function '''
@@ -87,11 +94,11 @@ class BookingBot(Thread):
 			return schedule.CancelJob
 		bot = Scraper()
 		booking_status = bot.book_court(date, booking.time_from, booking.time_to)
-		# r.rpush(REDIS_HISTORY_QUEUE_KEY, json.dumps({
-		# 		"booking_id": booking.id,
-		# 		"target_date": booking.date,
-		# 		"status": booking_status.name
-		# 	}))
+		r.rpush(REDIS_HISTORY_QUEUE_KEY, json.dumps({
+				"booking_id": booking.id,
+				"target_date": booking.date,
+				"status": booking_status.name
+			}))
 		if booking_status != BookingStatus.SUCCESS:
 			return
 		r.rpush(REDIS_HISTORY_QUEUE_KEY, json.dumps({

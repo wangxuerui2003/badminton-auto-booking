@@ -1,6 +1,7 @@
 from typing import List
 from flaskr.extensions import db
 from sqlalchemy.orm import Mapped, mapped_column
+from sqlalchemy import or_
 from datetime import datetime
 import calendar
 
@@ -51,7 +52,8 @@ class Booking(db.Model):
 		return calendar.day_name[self.weekday]
 
 	@staticmethod
-	def is_ongoing_task_query() -> bool:
-		if Booking.date is None:
-			return True
-		return Booking.date >= datetime.now()
+	def filter_ongoing_tasks():
+		now = datetime.now()
+		return Booking.query.filter(
+			or_(Booking.date.is_(None), Booking.date >= now)
+		).all()

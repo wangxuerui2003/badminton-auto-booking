@@ -1,6 +1,7 @@
 from fastapi import FastAPI, HTTPException
 from scraper import Scraper
 from booking_bot import BookingBot
+from pydantic import BaseModel
 
 bot = BookingBot()
 bot.setDaemon(True)
@@ -13,9 +14,13 @@ async def get_booked_courts():
 	scraper = Scraper()
 	return scraper.get_booked_courts()
 
+
+class Job(BaseModel):
+	id: int
+
 @app.post('/remove-job')
-async def remove_job(id: str):
-	if bot.remove_job(id):
+async def remove_job(job: Job):
+	if bot.remove_job(job.id):
 		return 'OK'
 	return HTTPException(status_code=404, detail="Job not found")
 

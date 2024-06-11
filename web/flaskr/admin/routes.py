@@ -15,7 +15,7 @@ import os
 
 def delete_job_from_bot(job_id):
     url = urljoin(os.environ.get('BOT_HOST'), '/remove-job')
-    res = requests.post(url, data={
+    res = requests.post(url, json={
         "id": job_id
     })
 
@@ -46,7 +46,7 @@ def delete_task():
     task_id = request.form.get('task_id')
     booking = Booking.query.get(task_id)
     if booking:
-        delete_job_from_bot(booking.id)
+        delete_job_from_bot(task_id)
         db.session.delete(booking)
         db.session.commit()
         flash(f'Successfully deleted task {booking}', 'success')

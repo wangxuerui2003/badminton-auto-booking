@@ -5,6 +5,7 @@ from flaskr.models.admin import Admin
 from flaskr.models.booking import Booking
 from flaskr.models.booking_history import BookingHistory
 import json
+import logging
 
 
 app = create_app()
@@ -18,16 +19,13 @@ def create_super_admin():
     db.session.commit()
 
 def init_tasks():
-    tasks = Booking.query.filter(~Booking.is_ongoing_task_query()).all()
+    tasks = Booking.filter_ongoing_tasks()
     for task in tasks:
         redis_conn.rpush(REDIS_JOBS_QUEUE_KEY, json.dumps(task.to_dict()))
 
+# create all tables for models if not exist
+with app.app_context():
+    db.create_all()
+    create_super_admin()
+    init_tasks()
 
-if __name__ == "__main__":
-    # create all tables for models if not exist
-    with app.app_context():
-        db.create_all()
-        create_super_admin()
-        init_tasks()
-
-    # app.run(host="0.0.0.0")

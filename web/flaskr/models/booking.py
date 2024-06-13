@@ -1,7 +1,7 @@
 from typing import List
 from flaskr.extensions import db
 from sqlalchemy.orm import Mapped, mapped_column
-from sqlalchemy import or_
+from sqlalchemy import or_, desc, text
 from datetime import datetime
 import calendar
 
@@ -13,8 +13,12 @@ class Booking(db.Model):
 	time_from: Mapped[int] = mapped_column(nullable=False)  # 7 to 22
 	time_to: Mapped[int] = mapped_column(nullable=False)  # 7 to 22
 	histories: Mapped[List['BookingHistory']] = db.relationship(
-        'BookingHistory', backref='booking', cascade='all, delete-orphan', lazy=True
-    )
+		'BookingHistory',
+		backref='booking',
+		cascade='all, delete-orphan',
+		lazy=True,
+		order_by=desc(text('booking_history.created_at'))
+	)
 
 	def __repr__(self) -> str:
 		if self.weekday is not None:
@@ -39,7 +43,10 @@ class Booking(db.Model):
 		return self.weekday is not None
 	
 	def status(self) -> str:
+		histories = self.histories
 		if self.weekday:
+			if len(histories) != 0:
+				return histories[0].status.lower()
 			return "N/A"
 		for history in self.histories:
 			if history.status.lower() == 'success':

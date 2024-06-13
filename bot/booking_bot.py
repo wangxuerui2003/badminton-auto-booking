@@ -94,13 +94,13 @@ class BookingBot(Thread):
 			return schedule.CancelJob
 		bot = Scraper()
 		booking_status = bot.book_court(date, booking.time_from, booking.time_to)
-		r.rpush(REDIS_HISTORY_QUEUE_KEY, json.dumps({
-				"booking_id": booking.id,
-				"target_date": booking.date,
-				"status": booking_status.name
-			}))
-		if booking_status != BookingStatus.SUCCESS:
-			return
+		# r.rpush(REDIS_HISTORY_QUEUE_KEY, json.dumps({
+		# 		"booking_id": booking.id,
+		# 		"target_date": booking.date,
+		# 		"status": booking_status.name
+		# 	}))
+		if booking_status == BookingStatus.BOOKED or booking_status != BookkingStatus.SUCCESS:
+			return;
 		r.rpush(REDIS_HISTORY_QUEUE_KEY, json.dumps({
 			"booking_id": booking.id,
 			"target_date": booking.date,

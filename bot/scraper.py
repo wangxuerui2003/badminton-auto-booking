@@ -9,8 +9,9 @@ from enum import Enum
 class BookingStatus(Enum):
 	SUCCESS = 1
 	FAILED = 2
-	NOT_AVAILABLE = 3
-	TOO_EARLY = 4
+	BOOKED = 3
+	NOT_AVAILABLE = 4
+	TOO_EARLY = 5
 
 
 def get_host(url):
@@ -111,7 +112,7 @@ class Scraper:
 		if not self.time_available(date, time_from, time_to):
 			return BookingStatus.NOT_AVAILABLE
 		if self.time_booked(date, time_from, time_to):
-			return BookingStatus.SUCCESS
+			return BookingStatus.BOOKED
 		for i in range(1, self.num_courts + 1):
 			court_booking_url = urljoin(self.court_booking_path, str(i))
 			res = self.session.post(court_booking_url, headers=HEADERS, timeout=5, params={

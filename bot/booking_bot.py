@@ -8,6 +8,7 @@ import redis
 import json
 from scraper import BookingStatus
 import sys
+import logging
 
 
 REDIS_HOST = os.environ.get('REDIS_HOST') or 'localhost'
@@ -94,6 +95,7 @@ class BookingBot(Thread):
 			return schedule.CancelJob
 		bot = Scraper()
 		booking_status = bot.book_court(date, booking.time_from, booking.time_to)
+		logging.info(f'Booking court at date {date}, from {booking.time_from} to {booking.time_to}. Status [{booking_status.name}]')
 		# r.rpush(REDIS_HISTORY_QUEUE_KEY, json.dumps({
 		# 		"booking_id": booking.id,
 		# 		"target_date": booking.date,

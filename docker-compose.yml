@@ -59,18 +59,22 @@ services:
     container_name: bcab-nginx
     volumes:
       - ./nginx/nginx.conf:/etc/nginx/conf.d/default.conf:ro
-    ports:
-      - "8000:80"
+    # ports:
+    #   - "8000:80"
     depends_on:
       - web
     networks:
       default_network:
         aliases:
           - redis
+      cf_tunnel:
 
 
 networks:
   default_network:
+    external: false
+  cf_tunnel:
+    external: true
 
 
 volumes:

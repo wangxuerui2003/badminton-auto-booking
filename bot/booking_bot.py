@@ -2,13 +2,18 @@ import time
 from datetime import datetime, timedelta
 import schedule
 from threading import Thread, Event
-from scraper import Scraper
+from scraper import BookingStatus, Scraper
 import os
 import redis
 import json
-from scraper import BookingStatus
 import sys
 import logging
+
+
+logging.basicConfig(
+	format='%(asctime)s %(levelname)-8s %(message)s', 
+	level=logging.INFO,
+	datefmt='%Y-%m-%d %H:%M:%S')
 
 
 REDIS_HOST = os.environ.get('REDIS_HOST') or 'localhost'
@@ -32,7 +37,12 @@ class BookingInfo:
 		if self.date is None:
 			return True
 		date = datetime.strptime(self.date, '%Y-%m-%d')
-		return date < datetime.now()
+		return date.date() < datetime.now().date()
+
+	def __str__(self) -> str:
+		if self.weekday:
+			return f"Repeat every {self.weekday} from {self.time_from} to {self.time_to}"
+		return f"Single time job {self.date} from {self.time_from} to {self.time_to}"
 
 
 class BookingBot(Thread):
@@ -58,6 +68,7 @@ class BookingBot(Thread):
 			self.repeated_jobs[booking.id] = booking
 		else:
 			self.add_job(booking)
+		logging.info(f"Received job {booking}")
 
 	def add_job(self, booking: BookingInfo):
 		''' Add a job to bot '''
@@ -81,11 +92,12 @@ class BookingBot(Thread):
 			if repeated_job.is_past():
 				self.repeated_jobs[id].date = get_next_weekday(repeated_job.weekday).strftime('%Y-%m-%d') 
 				self.add_job(self.repeated_jobs[id])
+				logging.info(f"Scheduled single time job {self.repeated_jobs[id].date} from {repeated_job.time_from} to {repeated_job.time_to} to for repeated job.")
 
 	def _job(self, booking: BookingInfo):
 		''' The core court booking bot function '''
 		date = booking.date
-		if datetime.strptime(date, '%Y-%m-%d') < datetime.now():
+		if datetime.strptime(date, '%Y-%m-%d').date() < datetime.now().date():
 			r.rpush(REDIS_HISTORY_QUEUE_KEY, json.dumps({
 				"booking_id": booking.id,
 				"target_date": booking.date,
@@ -101,7 +113,7 @@ class BookingBot(Thread):
 		# 		"target_date": booking.date,
 		# 		"status": booking_status.name
 		# 	}))
-		if booking_status == BookingStatus.BOOKED or booking_status != BookkingStatus.SUCCESS:
+		if booking_status != BookingStatus.BOOKED and booking_status != BookingStatus.SUCCESS:
 			return;
 		r.rpush(REDIS_HISTORY_QUEUE_KEY, json.dumps({
 			"booking_id": booking.id,

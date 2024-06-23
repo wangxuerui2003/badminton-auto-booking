@@ -1,5 +1,7 @@
 import time
 from datetime import datetime, timedelta
+
+import requests
 import schedule
 from threading import Thread, Event
 from scraper import BookingStatus, Scraper
@@ -105,16 +107,15 @@ class BookingBot(Thread):
 			}))
 			self.remove_job(booking.id)
 			return schedule.CancelJob
-		bot = Scraper()
-		booking_status = bot.book_court(date, booking.time_from, booking.time_to)
-		logging.info(f'Booking court at date {date}, from {booking.time_from} to {booking.time_to}. Status [{booking_status.name}]')
-		# r.rpush(REDIS_HISTORY_QUEUE_KEY, json.dumps({
-		# 		"booking_id": booking.id,
-		# 		"target_date": booking.date,
-		# 		"status": booking_status.name
-		# 	}))
+		try:
+			bot = Scraper()
+			booking_status = bot.book_court(date, booking.time_from, booking.time_to)
+			logging.info(f'Booking court at date {date}, from {booking.time_from} to {booking.time_to}. Status [{booking_status.name}]')
+		except requests.exceptions.HTTPError as e:
+			logging.warning(f'Booking court at date {date}, from {booking.time_from} to {booking.time_to}. Error: [{e}]')
+			return
 		if booking_status != BookingStatus.BOOKED and booking_status != BookingStatus.SUCCESS:
-			return;
+			return
 		r.rpush(REDIS_HISTORY_QUEUE_KEY, json.dumps({
 			"booking_id": booking.id,
 			"target_date": booking.date,

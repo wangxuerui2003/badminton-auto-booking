@@ -14,7 +14,7 @@ def get_booked_courts_from_bot():
         data = response.json()
         return data
     else:
-        return None
+        return []
 
 
 @frontend_bp.route('/')
